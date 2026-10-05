@@ -1,0 +1,615 @@
+/*
+ * Site footer (owner change OC.9), modelled closely on the landonorris.com
+ * footer: a dark masked panel with a raised tab, set in a frame of the page's
+ * own background (white or ink, so it follows the theme) that glows with the
+ * accent, rising in an arc from above the panel to connect page and footer. Everything inside is sized in "design
+ * pixels" (--d) of a 1688px-wide reference panel, so the whole composition
+ * scales with the footer's width. Below 720px wide it switches to a taller
+ * mobile composition (--m, design pixels of a 382px panel).
+ */
+
+.footer {
+  --lf-black: #0a0a0b;
+  --lf-panel: #0c0f1a;
+  --lf-white: #eef0f6;
+  --lf-muted: #a1a7b8;
+  --lf-accent: #2f6bff;
+  --lf-accent-bright: #5b8cff;
+  --lf-accent-off: #7c9dff;
+  --lf-gap: 1.25rem;
+  --ease-roll: cubic-bezier(0.65, 0, 0.25, 1);
+
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  padding: 0 1rem var(--lf-gap);
+  background: var(--bg);
+  color: var(--lf-white);
+  font-family: var(--font-sans), sans-serif;
+}
+
+/* The accent glow: a huge circle centred far above the footer, so only its
+   rim shows, rising along the sides from the spacer to the panel's base. */
+.footer::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  z-index: -1;
+  height: 100%;
+  background: radial-gradient(
+    circle farthest-corner at 50% -190%,
+    transparent 68%,
+    var(--lf-accent) 83%
+  );
+  pointer-events: none;
+}
+
+.layout {
+  position: relative;
+  container-type: inline-size;
+  --d: calc(100cqw / 1688);
+  --m: calc(100cqw / 382);
+}
+
+/* Room above the panel for the glow to rise into (landonorris.com: 14rem). */
+.spacer {
+  height: max(calc(224 * var(--d)), 7rem);
+}
+
+/* Scroll-in: FooterMotion sets --p from 0 to 1 as the footer enters the
+   viewport; the panel rises and settles, the figure a little behind it.
+   Without JavaScript or with reduced motion --p stays 1 (no movement). */
+.stage {
+  transform: translateY(calc((1 - var(--p, 1)) * 16%))
+    scale(calc(0.94 + 0.06 * var(--p, 1)));
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+
+.clip {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  aspect-ratio: 1688 / 896;
+  overflow: hidden;
+  background: var(--lf-panel);
+  mask: url('/images/footer-mask-desktop.svg') center / 100% 100% no-repeat;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---- Links ----------------------------------------------------------- */
+
+.links {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: calc(224 * var(--d));
+  padding-inline: calc(205 * var(--d));
+  pointer-events: none;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.eyebrow {
+  color: var(--lf-muted);
+  font-size: max(calc(10 * var(--d)), 10px);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(4 * var(--d));
+  margin: calc(16 * var(--d)) 0 calc(32 * var(--d));
+}
+
+.link {
+  display: block;
+  border-radius: 4px;
+  color: inherit;
+  font-size: max(calc(30 * var(--d)), 16px);
+  font-weight: 800;
+  font-stretch: 86%;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.link:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--lf-accent-bright);
+  outline-offset: 4px;
+}
+
+.linkAccent {
+  color: var(--lf-accent-bright);
+}
+
+/* ---- Text effects ---------------------------------------------------- */
+
+/* Clips a line to its own box, so the rolled copy stays hidden. */
+.clipText {
+  display: block;
+  clip-path: polygon(0 -2%, 0 94%, 100% 94%, 100% -2%);
+}
+
+/* Hover roll: each letter carries a copy of itself one line below (a text
+   shadow); on hover the letters rise one line, staggered, swapping in the
+   copy. */
+.roll {
+  display: inline-block;
+  text-shadow: 0 1em currentColor;
+  white-space: nowrap;
+}
+
+.char {
+  display: inline-block;
+  transition: transform 0.6s var(--ease-roll);
+  transition-delay: calc(var(--i) * 16ms);
+}
+
+.link:hover .char,
+.link:focus-visible .char,
+.button:hover .char,
+.button:focus-visible .char {
+  transform: translateY(-1em);
+}
+
+/* Line wipe: when the footer scrolls into view, a block sweeps across each
+   line and away again, leaving the text behind. */
+.wipe {
+  position: relative;
+  display: inline-block;
+}
+
+.wipe::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--wipe-color, var(--lf-accent));
+  transform: scaleX(0);
+  transform-origin: right center;
+  pointer-events: none;
+}
+
+:global([data-js]) .footer:not([data-revealed]) .wipeText {
+  opacity: 0;
+}
+
+.footer[data-revealed] .wipe::after {
+  animation: wipe 1s var(--ease-roll) both;
+  animation-delay: calc(var(--w, 0) * 70ms);
+}
+
+.footer[data-revealed] .wipeText {
+  animation: wipe-text 1s steps(1, end) both;
+  animation-delay: calc(var(--w, 0) * 70ms);
+}
+
+@keyframes wipe {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  50% {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+  50.01% {
+    transform: scaleX(1);
+    transform-origin: right center;
+  }
+  100% {
+    transform: scaleX(0);
+    transform-origin: right center;
+  }
+}
+
+@keyframes wipe-text {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ---- Statement ------------------------------------------------------- */
+
+.statement {
+  position: absolute;
+  inset: calc(192 * var(--d)) 0 auto;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.statementLayout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(768 * var(--d));
+}
+
+.statementText {
+  --wipe-color: var(--lf-accent-off);
+  font-size: calc(84 * var(--d));
+  font-weight: 660;
+  font-stretch: 93%;
+  letter-spacing: -0.0625px;
+  line-height: 0.856;
+  text-transform: uppercase;
+}
+
+.statementText .wipe {
+  display: block;
+}
+
+.serif {
+  color: var(--lf-accent-off);
+  font-family: var(--font-footer-serif), Georgia, serif;
+  font-size: 1.035em;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.856;
+}
+
+/* Signature, written on when the footer comes into view. */
+.signature {
+  position: absolute;
+  top: calc(-112 * var(--d));
+  z-index: 5;
+  width: calc(230 * var(--d));
+  rotate: -8deg;
+  color: var(--lf-accent-bright);
+  font-family: var(--font-footer-signature), cursive;
+}
+
+.signature text {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+
+:global([data-js]) .footer:not([data-revealed]) .signature tspan {
+  fill-opacity: 0;
+  stroke-dasharray: 700;
+  stroke-dashoffset: 700;
+}
+
+.footer[data-revealed] .signature tspan {
+  stroke-dasharray: 700;
+  animation: sign 1.4s ease-in-out both;
+  animation-delay: calc(300ms + var(--i) * 110ms);
+}
+
+@keyframes sign {
+  0% {
+    fill-opacity: 0;
+    stroke-dashoffset: 700;
+  }
+  70% {
+    fill-opacity: 0;
+  }
+  100% {
+    fill-opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---- Portrait and button --------------------------------------------- */
+
+.portraitWrap {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.portraitLayout {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.figure {
+  position: relative;
+  bottom: calc(-184 * var(--d));
+  width: calc(500 * var(--d));
+  height: calc(750 * var(--d));
+  object-fit: contain;
+  object-position: center bottom;
+  translate: 0 calc((1 - var(--p, 1)) * 12%);
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.5));
+}
+
+.buttonWrap {
+  position: absolute;
+  bottom: calc(28 * var(--d));
+  pointer-events: auto;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  height: max(calc(48 * var(--d)), 40px);
+  padding-inline: max(calc(16 * var(--d)), 14px);
+  border: 1px solid var(--lf-accent);
+  border-radius: max(calc(8.6 * var(--d)), 6px);
+  background: var(--lf-accent);
+  color: #fff;
+  font-size: max(calc(16 * var(--d)), 13px);
+  font-weight: 800;
+  font-stretch: 86%;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 16px 40px -14px rgba(47, 107, 255, 0.75);
+}
+
+/* Arrow that leaves up-right and returns from the bottom-left on hover. */
+.arrow {
+  position: relative;
+  display: inline-flex;
+  width: 1.15em;
+  height: 1.15em;
+  overflow: hidden;
+}
+
+.arrow svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s var(--ease-roll);
+}
+
+.arrow svg + svg {
+  transform: translate(-110%, 110%);
+}
+
+.button:hover .arrow svg:first-child,
+.button:focus-visible .arrow svg:first-child {
+  transform: translate(110%, -110%);
+}
+
+.button:hover .arrow svg + svg,
+.button:focus-visible .arrow svg + svg {
+  transform: none;
+}
+
+/* ---- Stack strip and pattern ----------------------------------------- */
+
+.marquee {
+  position: absolute;
+  inset: auto 0 calc(60 * var(--d));
+  z-index: 1;
+  height: max(calc(42 * var(--d)), 26px);
+  overflow: clip;
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  will-change: transform;
+}
+
+.logo {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.35em;
+  height: 100%;
+  margin-right: calc(80 * var(--d));
+  color: var(--lf-white);
+  font-size: max(calc(28 * var(--d)), 17px);
+  font-weight: 700;
+  font-stretch: 90%;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.logo svg {
+  width: auto;
+  height: 0.95em;
+  color: var(--lf-accent-bright);
+  fill: currentColor;
+}
+
+.pattern {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.09;
+  pointer-events: none;
+}
+
+/* ---- Legal row ------------------------------------------------------- */
+
+.legal {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: calc(30 * var(--d));
+  padding-inline: calc(24 * var(--d));
+  color: var(--lf-black);
+  font-size: max(calc(12 * var(--d)), 11px);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.legal strong {
+  font-weight: 800;
+}
+
+.legalLinks {
+  display: flex;
+  gap: var(--lf-gap);
+}
+
+.legalLinks a {
+  border-radius: 2px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.legalLinks a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legalLinks a:focus-visible {
+  outline: 2px solid var(--lf-black);
+  outline-offset: 2px;
+}
+
+/* Narrower desktops: the frame's corners get too small for the legal row,
+   so it moves below the panel. */
+@container (max-width: 1099px) {
+  .legal {
+    position: relative;
+    height: auto;
+    margin-top: 0.875rem;
+    padding: 0 0.25rem 0.25rem;
+    font-size: 12px;
+  }
+}
+
+/* ---- Mobile composition ---------------------------------------------- */
+
+@container (max-width: 719px) {
+  .clip {
+    aspect-ratio: 382 / 760;
+    mask-image: url('/images/footer-mask-mobile.svg');
+  }
+
+  .statement {
+    position: relative;
+    inset: auto;
+    order: -1;
+    margin-top: calc(118 * var(--m));
+  }
+
+  .statementLayout {
+    width: auto;
+    max-width: 90%;
+  }
+
+  .statementText {
+    font-size: calc(46 * var(--m));
+  }
+
+  .signature {
+    top: calc(-86 * var(--m));
+    width: calc(150 * var(--m));
+  }
+
+  .links {
+    margin-top: calc(40 * var(--m));
+    margin-bottom: auto;
+    padding-inline: 0;
+  }
+
+  .col {
+    width: 50%;
+  }
+
+  .eyebrow {
+    font-size: calc(11 * var(--m));
+  }
+
+  .list {
+    gap: calc(4 * var(--m));
+    margin: calc(12 * var(--m)) 0 calc(18 * var(--m));
+  }
+
+  .link {
+    font-size: calc(24 * var(--m));
+  }
+
+  .figure {
+    bottom: calc(-125 * var(--m));
+    width: calc(250 * var(--m));
+    height: calc(375 * var(--m));
+  }
+
+  .buttonWrap {
+    bottom: calc(16 * var(--m));
+  }
+
+  .marquee {
+    bottom: calc(70 * var(--m));
+    height: calc(30 * var(--m));
+  }
+
+  .logo {
+    margin-right: calc(36 * var(--m));
+    font-size: calc(20 * var(--m));
+  }
+
+  .legal {
+    position: relative;
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    height: auto;
+    margin-top: 1rem;
+    padding: 0 0 0.25rem;
+    font-size: 12px;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .char,
+  .arrow svg {
+    transition: none;
+  }
+
+  .footer[data-revealed] .wipe::after,
+  .footer[data-revealed] .wipeText,
+  .footer[data-revealed] .signature tspan {
+    animation: none;
+  }
+
+  :global([data-js]) .footer:not([data-revealed]) .wipeText {
+    opacity: 1;
+  }
+
+  :global([data-js]) .footer:not([data-revealed]) .signature tspan {
+    fill-opacity: 1;
+    stroke-dasharray: none;
+  }
+}

@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+template/
+package-lock.json
+next-env.d.ts
+*.tsbuildinfo
+
+# Prettier's MDX parser predates MDX 2/3 and corrupts JSX comments.
+content/**/*.mdx

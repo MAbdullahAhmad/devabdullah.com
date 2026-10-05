@@ -1,0 +1,24 @@
+{
+  "head": {
+    "host": "127.0.0.1",
+    "port": 4000
+  },
+  "services": [
+    {
+      "label": "backend-api",
+      "path": "/api",
+      "url": "http://127.0.0.1:4100",
+      "match": "**",
+      "rewrite": {
+        "from": "^/api(?:/(.*))?$",
+        "to": "/$1"
+      }
+    },
+    {
+      "label": "frontend",
+      "path": "/",
+      "url": "http://127.0.0.1:3000",
+      "match": "**"
+    }
+  ]
+}
