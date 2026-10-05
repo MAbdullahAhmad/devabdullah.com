@@ -1,0 +1,108 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: devabdullah-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            project/frontend/package-lock.json
+            project/rev-proxy/package-lock.json
+
+      - name: Verify frontend
+        working-directory: project/frontend
+        env:
+          NEXT_PUBLIC_SITE_URL: https://devabdullah.com
+          SITE_INDEXABLE: "false"
+        run: |
+          set -Eeuo pipefail
+          npm ci --include=dev --ignore-scripts
+          npm run check
+
+      - name: Verify reverse proxy
+        working-directory: project/rev-proxy
+        run: |
+          set -Eeuo pipefail
+          npm ci --include=dev --ignore-scripts
+          npm run typecheck
+          npm test
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Signal exact commit to production
+        env:
+          PROCESS_EXECUTOR_URL: ${{ vars.PROCESS_EXECUTOR_URL }}
+          PROCESS_EXECUTOR_TOKEN: ${{ secrets.PROCESS_EXECUTOR_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          [[ "${GITHUB_SHA}" =~ ^[0-9a-fA-F]{40}$ ]]
+          test -n "${PROCESS_EXECUTOR_URL}"
+          test -n "${PROCESS_EXECUTOR_TOKEN}"
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --header "X-Process-Token: ${PROCESS_EXECUTOR_TOKEN}" \
+            --data "{\"sha\":\"${GITHUB_SHA}\"}" \
+            "${PROCESS_EXECUTOR_URL}/api/devabdullah/prod/deploy"
+
+      - name: Wait for deployment result
+        env:
+          PROCESS_EXECUTOR_URL: ${{ vars.PROCESS_EXECUTOR_URL }}
+          PROCESS_EXECUTOR_TOKEN: ${{ secrets.PROCESS_EXECUTOR_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+
+          for attempt in $(seq 1 120); do
+            state="$({
+              curl --fail-with-body --silent --show-error \
+                --header "X-Process-Token: ${PROCESS_EXECUTOR_TOKEN}" \
+                "${PROCESS_EXECUTOR_URL}/api/devabdullah/prod/state"
+            })"
+
+            requested="$(jq -r '.requestedCommit // ""' <<<"$state")"
+            commit="$(jq -r '.commit // ""' <<<"$state")"
+            status="$(jq -r '.status // ""' <<<"$state")"
+
+            echo "attempt=${attempt} status=${status} requested=${requested} commit=${commit}"
+
+            if [[ "$requested" == "$GITHUB_SHA" && "$commit" == "$GITHUB_SHA" && "$status" == "ok" ]]; then
+              echo "Deployment succeeded: $GITHUB_SHA"
+              exit 0
+            fi
+
+            if [[ "$requested" == "$GITHUB_SHA" && "$status" == "failed" ]]; then
+              echo "Deployment failed: $GITHUB_SHA" >&2
+              echo "$state" >&2
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for deployment state for $GITHUB_SHA" >&2
+          exit 1

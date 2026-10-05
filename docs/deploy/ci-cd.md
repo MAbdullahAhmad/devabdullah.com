@@ -315,7 +315,7 @@ set -a
 . /devabdullah/deployment-data/devabdullah.com/frontend.env
 set +a
 
-npm ci --ignore-scripts
+npm ci --include=dev --ignore-scripts
 npm run check
 ```
 
@@ -333,7 +333,7 @@ Then:
 
 ```bash
 cd /devabdullah/apps/devabdullah.com/project/rev-proxy
-npm ci --ignore-scripts
+npm ci --include=dev --ignore-scripts
 npm run typecheck
 npm test
 ```
@@ -507,14 +507,14 @@ jobs:
           SITE_INDEXABLE: "false"
         run: |
           set -Eeuo pipefail
-          npm ci --ignore-scripts
+          npm ci --include=dev --ignore-scripts
           npm run check
 
       - name: Verify reverse proxy
         working-directory: project/rev-proxy
         run: |
           set -Eeuo pipefail
-          npm ci --ignore-scripts
+          npm ci --include=dev --ignore-scripts
           npm run typecheck
           npm test
 

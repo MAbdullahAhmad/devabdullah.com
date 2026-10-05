@@ -219,7 +219,7 @@ set -a
 . /devabdullah/deployment-data/devabdullah.com/frontend.env
 set +a
 
-npm ci --ignore-scripts
+npm ci --include=dev --ignore-scripts
 npm run check
 ```
 
@@ -238,7 +238,7 @@ A deployment must not restart the running frontend if this command fails.
 export PATH=/opt/node24/bin:$PATH
 cd /devabdullah/apps/devabdullah.com/project/rev-proxy
 
-npm ci --ignore-scripts
+npm ci --include=dev --ignore-scripts
 npm run typecheck
 npm test
 ```
@@ -497,7 +497,7 @@ cd project/frontend
 set -a
 . /devabdullah/deployment-data/devabdullah.com/frontend.env
 set +a
-npm ci --ignore-scripts
+npm ci --include=dev --ignore-scripts
 npm run check
 ```
 
@@ -505,7 +505,7 @@ Build/test proxy:
 
 ```bash
 cd ../rev-proxy
-npm ci --ignore-scripts
+npm ci --include=dev --ignore-scripts
 npm run typecheck
 npm test
 ```
