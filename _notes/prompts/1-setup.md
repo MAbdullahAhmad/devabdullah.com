@@ -46,3 +46,18 @@ start now.
 deleted the existing devabdullah.com A/AAAA/CNAME record. continue.
 
 ---
+
+short qs: each commit updates devabdullah.com ? there is no dev.devabdullah.com ?
+
+---
+
+ok, do it like this:
+- when i push with any commit, it deploys at dev.devabdullah.com. and i can also deploy using the `./server-control.bash` that uses `./.server-control.env` that has process executor url, token, project and wait seconds. (it shows a manu to dev deploy or prod deploy and asks for commit # then deploys)
+- but if i commit with exact name of commit as `deploy` or use that bash command to deploy as prod, only then it should update at devabdullah.com directly
+- also on server, there should be 2 running ports for 2 different websites, sysetm services, dns configuration in cloudflared as well as process-executor to update them accordingly.
+
+let me know when done.
+
+update here in docs also after updating in codeabse accordingly as well as in workflows and server.
+
+---
