@@ -42,3 +42,7 @@ also make sure configurations are also received in process-executor according to
 start now.
 
 ---
+
+deleted the existing devabdullah.com A/AAAA/CNAME record. continue.
+
+---
